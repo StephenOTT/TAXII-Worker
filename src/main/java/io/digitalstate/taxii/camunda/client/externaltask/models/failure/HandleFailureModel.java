@@ -5,8 +5,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import io.digitalstate.taxii.camunda.client.common.HttpConfig;
-import io.digitalstate.taxii.camunda.client.common.HttpConfigModel;
 import org.immutables.value.Value;
 
 import javax.validation.constraints.Min;
@@ -66,17 +64,5 @@ public interface HandleFailureModel {
     @JsonInclude(value = NON_EMPTY, content= NON_EMPTY)
     @Min(0)
     Optional<Long> getRetryTimeout();
-
-    @JsonIgnore
-    @Value.Default
-    default HttpConfigModel getHttpConfig() {
-        HttpConfigModel config = HttpConfig.builder()
-                .method("POST")
-                .uri("/external-task/" + getId() + "/failure")
-                .build();
-
-        return config;
-    }
-
 
 }

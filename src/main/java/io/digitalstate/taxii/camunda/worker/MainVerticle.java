@@ -20,7 +20,8 @@ public class MainVerticle extends AbstractVerticle {
         // Registers additional modules for Java8 Jackson usage
         JsonConfig.registerModules();
 
-        externalTaskService = new ExternalTaskService(vertx);
+        externalTaskService = new ExternalTaskService(vertx)
+                .setBaseUrl("http://localhost:8081");
 
         // Setup a Fetch and Lock configuration with a topic.
         FetchAndLock falConfig = FetchAndLock.builder()

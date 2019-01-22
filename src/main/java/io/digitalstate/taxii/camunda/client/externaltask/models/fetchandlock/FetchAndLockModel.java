@@ -1,12 +1,8 @@
 package io.digitalstate.taxii.camunda.client.externaltask.models.fetchandlock;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import io.digitalstate.taxii.camunda.client.common.HttpConfig;
-import io.digitalstate.taxii.camunda.client.common.HttpConfigModel;
-import io.digitalstate.taxii.camunda.client.HttpDefaults;
 import org.immutables.value.Value;
 
 import javax.validation.constraints.NotBlank;
@@ -54,14 +50,6 @@ public interface FetchAndLockModel {
     @JsonProperty("topics")
     @Size(min = 1)
     Set<FetchAndLockTopicModel> getTopics();
-
-    @JsonIgnore
-    @Value.Default
-    default HttpConfigModel getHttpConfig(){
-        return HttpConfig.copyOf(HttpDefaults.httpConfigDefaults)
-                .withMethod("POST")
-                .withUri("/external-task/fetchAndLock");
-    }
 
 }
 
