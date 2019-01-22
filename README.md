@@ -1,6 +1,13 @@
 # TAXII-Worker
 
-External Task Worker
+External Task Worker for TAXII-springboot-bpmn.
+
+This is a generic task worker that can execute scripts in different polymorphic languages as determined by the execution env and worker configurations.
+Scripts can be injected during runtime allowing a flexible architecture.
+
+Example of a BPMN that would be executed on the TAXII-springboot-bpmn Server, and the worker(s) would Fetch and Lock, and then complete the work as orchestrated by Camunda.
+
+![bpmn example](./docs/bpmn/example_taxii_worker.png)
 
 # Current Workflow Actions Supported
 
