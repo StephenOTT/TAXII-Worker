@@ -63,8 +63,7 @@ public class ExternalTaskService {
     public Future<FetchAndLockResponseListModel> fetchAndLock(FetchAndLockModel requestModel) {
 
         Future<FetchAndLockResponseListModel> future = Future.future();
-
-
+        
         HttpRequest<Buffer> request = client.postAbs(getAbsoluteExternalTaskUrl() + fetchAndLockUri);
         request.headers().addAll(commonHeaders);
         request.sendJson(requestModel, ar -> {
