@@ -8,8 +8,6 @@ import io.digitalstate.taxii.camunda.client.externaltask.models.fetchandlock.*;
 import io.vertx.circuitbreaker.CircuitBreaker;
 import io.vertx.circuitbreaker.CircuitBreakerState;
 import io.vertx.core.AbstractVerticle;
-import io.vertx.core.Future;
-import io.vertx.ext.web.client.HttpResponse;
 
 import java.util.Date;
 import java.util.List;
