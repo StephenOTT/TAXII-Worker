@@ -1,8 +1,10 @@
 package io.digitalstate.taxii.camunda.client.externaltask.models.fetchandlock;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import io.digitalstate.taxii.camunda.client.common.EngineName;
 import org.immutables.value.Value;
 
 import javax.validation.constraints.NotBlank;
@@ -13,7 +15,7 @@ import java.util.Set;
 @Value.Immutable
 @Value.Style(jdkOnly = true, typeAbstract="*Model", typeImmutable="*", validationMethod = Value.Style.ValidationMethod.NONE, depluralize = true)
 @JsonSerialize(as = FetchAndLock.class) @JsonDeserialize(builder = FetchAndLock.Builder.class)
-public interface FetchAndLockModel {
+public interface FetchAndLockModel extends EngineName {
 
     @JsonProperty("workerId")
     @Value.Default

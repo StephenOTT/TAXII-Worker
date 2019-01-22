@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import io.digitalstate.taxii.camunda.client.common.EngineName;
 import org.immutables.value.Value;
 
 import javax.validation.constraints.Min;
@@ -16,7 +17,7 @@ import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_EMPTY;
 @Value.Immutable
 @Value.Style(jdkOnly = true, typeAbstract = "*Model", typeImmutable = "*", validationMethod = Value.Style.ValidationMethod.NONE, depluralize = true)
 @JsonSerialize(as = HandleFailure.class) @JsonDeserialize(builder = HandleFailure.Builder.class)
-public interface HandleFailureModel {
+public interface HandleFailureModel extends EngineName {
 
     /**
      * The Id of the task to be completed.

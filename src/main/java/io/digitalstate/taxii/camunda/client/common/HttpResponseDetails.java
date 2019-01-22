@@ -17,5 +17,4 @@ public interface HttpResponseDetails {
     @JsonIgnore
     Optional<Object> getResponseDetails();
 
-
 }
