@@ -1,0 +1,5 @@
+taxii:
+  workers:
+    - name: ""
+      handler: ""
+      variables:
