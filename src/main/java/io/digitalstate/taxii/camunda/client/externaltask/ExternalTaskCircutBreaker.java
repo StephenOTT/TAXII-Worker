@@ -21,8 +21,8 @@ public class ExternalTaskCircutBreaker {
            options = new CircuitBreakerOptions()
                    .setMaxFailures(1)
                    .setResetTimeout(1000)
-                   .setMaxRetries(4) // is actually 5 (0=1)
-                   .setTimeout(60000);
+                   .setMaxRetries(99) // is actually 5 (0=1)
+                   .setTimeout(120000);
         }
 
         CircuitBreaker breaker = CircuitBreaker.create("camunda-external-task-breaker", vertx, options

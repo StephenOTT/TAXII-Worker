@@ -49,11 +49,10 @@ public class MainVerticle extends AbstractVerticle {
             if (breaker.state().equals(CircuitBreakerState.HALF_OPEN) || breaker.state().equals(CircuitBreakerState.OPEN)){
                 System.out.println("Resetting breaker...");
                 breaker.reset();
+
                 checkForTasks(breaker,falConfig);
             }
         });
-
-        // breaker implements linear backoff
 
 
     }
