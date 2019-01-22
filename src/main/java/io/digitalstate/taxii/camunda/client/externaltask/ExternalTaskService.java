@@ -1,6 +1,7 @@
 package io.digitalstate.taxii.camunda.client.externaltask;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import io.digitalstate.taxii.camunda.client.common.CamundaErrorResponse;
 import io.digitalstate.taxii.camunda.client.externaltask.models.bpmnerror.HandleBpmnErrorModel;
 import io.digitalstate.taxii.camunda.client.externaltask.models.bpmnerror.HandleBpmnErrorResponse;
 import io.digitalstate.taxii.camunda.client.externaltask.models.bpmnerror.HandleBpmnErrorResponseModel;
@@ -60,38 +61,49 @@ public class ExternalTaskService {
      *
      * @return Future of FetchAndLockResponseListModel
      */
-    public Future<FetchAndLockResponseListModel> fetchAndLock(FetchAndLockModel requestModel) {
+    public Future<FetchAndLockResponseListModel> fetchAndLock(FetchAndLockModel requestModel) throws CamundaErrorResponse, IllegalStateException {
 
-        Future<FetchAndLockResponseListModel> future = Future.future();
+        Future<FetchAndLockResponseListModel> response = Future.future();
 
         HttpRequest<Buffer> request = client.postAbs(getAbsoluteExternalTaskUrl() + fetchAndLockUri);
         request.headers().addAll(commonHeaders);
         request.sendJson(requestModel, ar -> {
             if (ar.succeeded()) {
-                try {
-                    System.out.println(ar.result().statusCode());
-                    List<FetchAndLockResponseModel> list = Json.decodeValue(ar.result().body(),
-                            new TypeReference<List<FetchAndLockResponseModel>>() {
-                            });
+                switch (ar.result().statusCode()) {
+                    case 200:
+                        try {
+                            List<FetchAndLockResponseModel> list = Json.decodeValue(ar.result().body(),
+                                    new TypeReference<List<FetchAndLockResponseModel>>() {
+                                    });
 
-                    FetchAndLockResponseList.Builder response = FetchAndLockResponseList.builder();
+                            FetchAndLockResponseList.Builder listObject = FetchAndLockResponseList.builder();
 
-                    if (ar.result().statusCode() == 200) {
-                        response.addAllFetchedTasks(list);
-                    }
+                            if (ar.result().statusCode() == 200) {
+                                listObject.addAllFetchedTasks(list);
+                            }
 
-                    response.responseDetails(ar.result());
-                    future.complete(response.build());
+                            listObject.responseDetails(ar.result());
+                            response.complete(listObject.build());
 
-                } catch (Exception e) {
-                    throw new IllegalStateException("Unable to parse external tasks.  Response was: " + ar.result().bodyAsString(), e);
+                        } catch (Exception e) {
+                            throw new IllegalStateException("Unable to parse external tasks.  Response was: " + ar.result().bodyAsString(), e);
+                        }
+                        break;
+                    case 400:
+                        response.fail(new CamundaErrorResponse(ar.result().statusCode(), ar.result().bodyAsString(), "Received a 400: Returned if the task's most recent lock was not acquired by the provided worker. See the Introduction for the error response format."));
+                    case 404:
+                        response.fail(new CamundaErrorResponse(ar.result().statusCode(), ar.result().bodyAsString(), "Received a 404: Returned if the task does not exist. This could indicate a wrong task id as well as a cancelled task, e.g., due to a caught BPMN boundary event. See the Introduction for the error response format."));
+                    case 500:
+                        response.fail(new CamundaErrorResponse(ar.result().statusCode(), ar.result().bodyAsString(), "Received a 500: Returned if the corresponding process instance could not be resumed successfully. See the Introduction for the error response format."));
+                    default:
+                        response.fail(new CamundaErrorResponse(ar.result().statusCode(), ar.result().bodyAsString(), "Received a unexpected response."));
                 }
             } else {
                 throw new IllegalStateException("Unable to execute fetch-and-lock request for external tasks", ar.cause());
             }
         });
 
-        return future;
+        return response;
     }
 
     /**
@@ -101,7 +113,7 @@ public class ExternalTaskService {
      *
      * @return Future of CompleteResponseModel
      */
-    public Future<CompleteResponseModel> complete(CompleteModel completeModel) {
+    public Future<CompleteResponseModel> complete(CompleteModel completeModel) throws CamundaErrorResponse, IllegalStateException  {
 
         Future<CompleteResponseModel> response = Future.future();
 
@@ -109,11 +121,22 @@ public class ExternalTaskService {
         request.headers().addAll(commonHeaders);
         request.sendJson(completeModel, ar -> {
             if (ar.succeeded()) {
-                CompleteResponseModel result = CompleteResponse.builder()
-                        .responseDetails(ar.result())
-                        .build();
-                response.complete(result);
-
+                switch (ar.result().statusCode()) {
+                    case 204:
+                        CompleteResponseModel result = CompleteResponse.builder()
+                                .responseDetails(ar.result())
+                                .build();
+                        response.complete(result);
+                        break;
+                    case 400:
+                        response.fail(new CamundaErrorResponse(ar.result().statusCode(), ar.result().bodyAsString(), "Received a 400: Returned if the task's most recent lock was not acquired by the provided worker. See the Introduction for the error response format."));
+                    case 404:
+                        response.fail(new CamundaErrorResponse(ar.result().statusCode(), ar.result().bodyAsString(), "Received a 404: Returned if the task does not exist. This could indicate a wrong task id as well as a cancelled task, e.g., due to a caught BPMN boundary event. See the Introduction for the error response format."));
+                    case 500:
+                        response.fail(new CamundaErrorResponse(ar.result().statusCode(), ar.result().bodyAsString(), "Received a 500: Returned if the corresponding process instance could not be resumed successfully. See the Introduction for the error response format."));
+                    default:
+                        response.fail(new CamundaErrorResponse(ar.result().statusCode(), ar.result().bodyAsString(), "Received a unexpected response."));
+                }
             } else {
                 throw new IllegalStateException("Unable to execute Completion request for external task", ar.cause());
             }
@@ -129,7 +152,7 @@ public class ExternalTaskService {
      *
      * @return Future of HandleBpmnErrorResponseModel
      */
-    public Future<HandleBpmnErrorResponseModel> handleBpmnError(HandleBpmnErrorModel handleBpmnErrorModel) {
+    public Future<HandleBpmnErrorResponseModel> handleBpmnError(HandleBpmnErrorModel handleBpmnErrorModel) throws CamundaErrorResponse, IllegalStateException  {
 
         Future<HandleBpmnErrorResponseModel> response = Future.future();
 
@@ -137,10 +160,22 @@ public class ExternalTaskService {
         request.headers().addAll(commonHeaders);
         request.sendJson(handleBpmnErrorModel, ar -> {
             if (ar.succeeded()) {
-                HandleBpmnErrorResponseModel result = HandleBpmnErrorResponse.builder()
-                        .responseDetails(ar.result())
-                        .build();
-                response.complete(result);
+                switch (ar.result().statusCode()) {
+                    case 204:
+                        HandleBpmnErrorResponseModel result = HandleBpmnErrorResponse.builder()
+                                .responseDetails(ar.result())
+                                .build();
+                        response.complete(result);
+                        break;
+                    case 400:
+                        response.fail(new CamundaErrorResponse(ar.result().statusCode(), ar.result().bodyAsString(), "Received a 400: Returned if the task's most recent lock was not acquired by the provided worker. See the Introduction for the error response format."));
+                    case 404:
+                        response.fail(new CamundaErrorResponse(ar.result().statusCode(), ar.result().bodyAsString(), "Received a 404: Returned if the task does not exist. This could indicate a wrong task id as well as a cancelled task, e.g., due to a caught BPMN boundary event. See the Introduction for the error response format."));
+                    case 500:
+                        response.fail(new CamundaErrorResponse(ar.result().statusCode(), ar.result().bodyAsString(), "Received a 500: Returned if the corresponding process instance could not be resumed successfully. See the Introduction for the error response format."));
+                    default:
+                        response.fail(new CamundaErrorResponse(ar.result().statusCode(), ar.result().bodyAsString(), "Received a unexpected response."));
+                }
             } else {
                 throw new IllegalStateException("Unable to execute Handle-Bpmn-Error request for external task", ar.cause());
             }
@@ -156,7 +191,7 @@ public class ExternalTaskService {
      *
      * @return Future of HandleFailureResponseModel
      */
-    public Future<HandleFailureResponseModel> handleFailure(HandleFailureModel handleFailureModel) {
+    public Future<HandleFailureResponseModel> handleFailure(HandleFailureModel handleFailureModel) throws CamundaErrorResponse, IllegalStateException  {
 
         Future<HandleFailureResponseModel> response = Future.future();
 
@@ -164,10 +199,22 @@ public class ExternalTaskService {
         request.headers().addAll(commonHeaders);
         request.sendJson(handleFailureModel, ar -> {
             if (ar.succeeded()) {
-                HandleFailureResponseModel result = HandleFailureResponse.builder()
-                        .responseDetails(ar.result())
-                        .build();
-                response.complete(result);
+                switch (ar.result().statusCode()) {
+                    case 204:
+                        HandleFailureResponseModel result = HandleFailureResponse.builder()
+                                .responseDetails(ar.result())
+                                .build();
+                        response.complete(result);
+                        break;
+                    case 400:
+                        response.fail(new CamundaErrorResponse(ar.result().statusCode(), ar.result().bodyAsString(), "Received a 400: Returned if the task's most recent lock was not acquired by the provided worker. See the Introduction for the error response format."));
+                    case 404:
+                        response.fail(new CamundaErrorResponse(ar.result().statusCode(), ar.result().bodyAsString(), "Received a 404: Returned if the task does not exist. This could indicate a wrong task id as well as a cancelled task, e.g., due to a caught BPMN boundary event. See the Introduction for the error response format."));
+                    case 500:
+                        response.fail(new CamundaErrorResponse(ar.result().statusCode(), ar.result().bodyAsString(), "Received a 500: Returned if the corresponding process instance could not be resumed successfully. See the Introduction for the error response format."));
+                    default:
+                        response.fail(new CamundaErrorResponse(ar.result().statusCode(), ar.result().bodyAsString(), "Received a unexpected response."));
+                }
             } else {
                 throw new IllegalStateException("Unable to execute Handle-Failure request for external task", ar.cause());
             }
@@ -181,7 +228,7 @@ public class ExternalTaskService {
     // SETTERS AND GETTERS
     //
 
-    public String getAbsoluteExternalTaskUrl(){
+    public String getAbsoluteExternalTaskUrl() {
         return getAbsoluteBaseUrl() + getCamundaRestUri() + getCamundaExternalTaskUri();
     }
 

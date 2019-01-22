@@ -1,12 +1,17 @@
 package io.digitalstate.taxii.camunda.worker;
 
+import io.digitalstate.taxii.camunda.client.externaltask.ExternalTaskCircutBreaker;
 import io.digitalstate.taxii.camunda.client.externaltask.ExternalTaskService;
 import io.digitalstate.taxii.camunda.client.externaltask.models.complete.Complete;
 import io.digitalstate.taxii.camunda.client.externaltask.models.complete.CompleteModel;
 import io.digitalstate.taxii.camunda.client.externaltask.models.fetchandlock.*;
+import io.vertx.circuitbreaker.CircuitBreaker;
+import io.vertx.circuitbreaker.CircuitBreakerState;
 import io.vertx.core.AbstractVerticle;
+import io.vertx.core.Future;
 import io.vertx.ext.web.client.HttpResponse;
 
+import java.util.Date;
 import java.util.List;
 
 public class MainVerticle extends AbstractVerticle {
@@ -26,37 +31,56 @@ public class MainVerticle extends AbstractVerticle {
         // Setup a Fetch and Lock configuration with a topic.
         FetchAndLock falConfig = FetchAndLock.builder()
                 .addTopic(FetchAndLockTopic.builder()
-                            .topicName("mytopic")
-                            .build())
+                        .topicName("mytopic")
+                        .build())
                 .addTopic(FetchAndLockTopic.builder()
-                            .topicName("someOtherSimilarTopic")
-                            .build())
-                .addTopics(FetchAndLockTopic.builder()
-                            .topicName("t1")
-                            .build(),
-                           FetchAndLockTopic.builder()
-                            .topicName("t2")
-                            .build())
+                        .topicName("someOtherSimilarTopic")
+                        .build())
+                .maxTasks(50)
+                .usePriority(true)
+                .workerId("central-worker")
                 .build();
 
-        externalTaskService.fetchAndLock(falConfig).setHandler(result -> {
-            HttpResponse httpDetails = ((HttpResponse) result.result().getResponseDetails()
-                    .orElseThrow(() -> new IllegalStateException("No HTTP Response object was returned!")));
+        CircuitBreaker breaker = new ExternalTaskCircutBreaker(vertx, 2000L, null).getCircuitBreaker();
 
-            if (httpDetails.statusCode() == 200) {
-                List<FetchAndLockResponseModel> tasks = result.result().getFetchedTasks();
-
-                if (!tasks.isEmpty()) {
-                    tasks.forEach(this::doSomeWork);
-                } else {
-                    System.out.println("No tasks found");
-                }
-            } else {
-                throw new IllegalStateException("Server did not return status code 200.  Returned: " + httpDetails.statusCode() + " : response body: " + httpDetails.bodyAsString());
+        checkForTasks(breaker, falConfig);
+        vertx.setPeriodic(5000, t->{
+            System.out.println("Breaker state is: " + breaker.state().toString());
+            if (breaker.state().equals(CircuitBreakerState.HALF_OPEN) || breaker.state().equals(CircuitBreakerState.OPEN)){
+                System.out.println("Resetting breaker...");
+                breaker.reset();
+                checkForTasks(breaker,falConfig);
             }
         });
 
+        // breaker implements linear backoff
+
+
     }
+
+    private void checkForTasks(CircuitBreaker breaker, FetchAndLockModel fetchAndLockModel){
+         breaker.execute(future -> {
+            System.out.println("Attempting to Fetch and Lock Tasks... " + new Date().toString());
+
+            externalTaskService.fetchAndLock(fetchAndLockModel).setHandler(result -> {
+                if (result.succeeded()) {
+                    List<FetchAndLockResponseModel> tasks = result.result().getFetchedTasks();
+
+                    if (!tasks.isEmpty()) {
+                        future.complete();
+                        tasks.forEach(this::doSomeWork);
+                    } else {
+                        System.out.println("No tasks found");
+                        future.fail("No Tasks Found");
+                    }
+                } else {
+                    System.out.println(result.cause().getMessage());
+                    future.fail(result.cause());
+                }
+            });
+        });
+    }
+
 
     /*
      * Generic method that would represent some worker processor.
@@ -82,15 +106,12 @@ public class MainVerticle extends AbstractVerticle {
      * allowing error handling to be dependent on how the processor wants to deal with errors.
      *
      */
-    private void completeWork(CompleteModel completeModel){
+    private void completeWork(CompleteModel completeModel) {
         externalTaskService.complete(completeModel).setHandler(completeResult -> {
-            HttpResponse response = ((HttpResponse) completeResult.result().getResponseDetails()
-                    .orElseThrow(() -> new IllegalStateException("No HTTP Response object was returned!")));
-
-            if (response.statusCode() == 204) {
-                System.out.println("COMPLETED!");
+            if (completeResult.succeeded()) {
+                System.out.println(String.format("Task %s completed.", completeModel.getId()));
             } else {
-                System.out.println("FAILED!");
+                System.out.println(completeResult.cause().getMessage());
             }
         });
     }
