@@ -9,6 +9,9 @@ Example of a BPMN that would be executed on the TAXII-springboot-bpmn Server, an
 
 ![bpmn example](./docs/bpmn/example_taxii_worker.png)
 
+Using External workers allow execution of TAXII and STIX data evaluations and actions to be done in any language.  
+This worker acts as a universal bridge example allowing a unified worker framework to execute scripting in various polymorphic languages providing flexibility to downstream Cyber Analysts.
+
 # Current Workflow Actions Supported
 
 ## Fetch and Lock
