@@ -12,6 +12,15 @@ Example of a BPMN that would be executed on the TAXII-springboot-bpmn Server, an
 Using External workers allow execution of TAXII and STIX data evaluations and actions to be done in any language.  
 This worker acts as a universal bridge example allowing a unified worker framework to execute scripting in various polymorphic languages providing flexibility to downstream Cyber Analysts.
 
+## Benefits of using Worker patterns:
+
+1. Crossing System Boundaries: An external worker does not need to run in the same Java process, on the same machine, in the same cluster or even on the same continent as the workflow/process engine. All that is required is that it can access the process engine’s API (via REST or Java). Due to the polling pattern, the worker does not need to expose any interface for the process engine to access.
+1. Crossing Technology Boundaries: An external worker does not need to be implemented in Java. Instead, any technology can be used that is most suitable to perform a work item and that can be used to access the process engine’s API (via REST or Java).  The TAXII-Worker provides a layer of abstraction around this need, so that all of the interactions with the server are handled, and only the core scripting is required by the end-user/developer/analyst.
+1. Specialized Workers: An external worker does not need to be a general purpose application. Each external task instance receives a topic name identifying the nature of the task to perform. Workers can poll tasks for only those topics that they can work on.  The TAXII-Worker framework allows multiple instances to be added into the network and automatic connectivity within the cluster is provided through Vertx's Event Bus.
+1. Fine-Grained Scaling: If there is high load concentrated on external task processing, the number of external workers for the respective topics can be scaled out independently of the process engine.  If a specific threat is active and requires additional resources, the worker for that threat can be stood-up and scaled independently of the rest of the network of workers and the process engine.
+1. Independent Maintenance: Workers can be maintained independently of the process engine without breaking operations. For example, if a worker for a specific topic has a downtime (e.g., due to an update), there is no immediate impact on the process engine. Execution of external tasks for such workers degrades gracefully: They are stored in the external task list until the external worker resumes operation.
+
+
 # Current Workflow Actions Supported
 
 ## Fetch and Lock
