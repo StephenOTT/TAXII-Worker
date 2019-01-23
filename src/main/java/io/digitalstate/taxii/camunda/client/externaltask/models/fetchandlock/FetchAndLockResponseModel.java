@@ -19,8 +19,7 @@ import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_EMPTY;
 public interface FetchAndLockResponseModel extends HttpResponseDetails {
 
     @JsonProperty("activityId")
-    @JsonInclude(value = NON_EMPTY, content= NON_EMPTY)
-    Optional<String> getActivityId();
+    String getActivityId();
 
     @JsonProperty("activityInstanceId")
     @JsonInclude(value = NON_EMPTY, content= NON_EMPTY)
@@ -71,16 +70,14 @@ public interface FetchAndLockResponseModel extends HttpResponseDetails {
     Optional<Boolean> getSuspended();
 
     @JsonProperty("workerId")
-    @JsonInclude(value = NON_EMPTY, content= NON_EMPTY)
-    Optional<String> getWorkerId();
+    String getWorkerId();
 
     @JsonProperty("priority")
     @JsonInclude(value = NON_EMPTY, content= NON_EMPTY)
     Optional<String> getPriority();
 
     @JsonProperty("topicName")
-    @JsonInclude(value = NON_EMPTY, content= NON_EMPTY)
-    Optional<String> getTopicName();
+    String getTopicName();
 
     @JsonProperty("businessKey")
     @JsonInclude(value = NON_EMPTY, content= NON_EMPTY)

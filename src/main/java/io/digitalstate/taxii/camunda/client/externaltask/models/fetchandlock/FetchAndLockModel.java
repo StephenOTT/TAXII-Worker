@@ -7,9 +7,11 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import io.digitalstate.taxii.camunda.client.common.EngineName;
 import org.immutables.value.Value;
 
+import javax.validation.constraints.Max;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Positive;
 import javax.validation.constraints.Size;
+import java.util.Optional;
 import java.util.Set;
 
 @Value.Immutable
@@ -44,6 +46,13 @@ public interface FetchAndLockModel extends EngineName {
     default boolean getUsePriority(){
         return false;
     }
+
+    /**
+     * The async response timeout value in milliseconds.  Max value is 1,800,0000 (30 minutes)
+     */
+    @JsonProperty("asyncResponseTimeout")
+    @Max(1800000) @Positive
+    Optional<Long> getAsyncResponseTimeout();
 
     /**
      * Requires minimum 1 topic configuration.

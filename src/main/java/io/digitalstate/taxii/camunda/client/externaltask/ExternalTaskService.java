@@ -32,26 +32,31 @@ public class ExternalTaskService {
 
     private Vertx vertx;
     private WebClient client;
+    private ExternalTaskOptions externalTaskOptions;
 
-    private String fetchAndLockUri = "/fetchAndLock";
-    private String completeUri = "/%s/complete";
-    private String bpmnErrorUri = "/%s/bpmnError";
-    private String failureUri = "/%s/failure";
-
-    private String camundaRestUri = "/engine-rest";
-    private String camundaExternalTaskUri = "/external-task";
-    private String baseUrl = "http://localhost:8080";
-
-    private MultiMap commonHeaders = new CaseInsensitiveHeaders();
-
+    /**
+     * Sets up External Task Service using default configurations for WebClient and Camunda API Endpoints.
+     * Uses http://localhost:8080 as baseUrl and /engine-rest as the REST URI of Camunda.
+     *
+     * @param vertx Vertx Instance
+     */
     public ExternalTaskService(Vertx vertx) {
         this.vertx = vertx;
-        client = WebClient.create(vertx);
+        this.client = WebClient.create(vertx);
+        this.externalTaskOptions = new ExternalTaskOptions();
     }
 
-    public ExternalTaskService(Vertx vertx, WebClientOptions webClientOptions) {
+    /**
+     * Sets up External Task Service using provided configurations.
+     *
+     * @param vertx               Vertx Instance
+     * @param webClientOptions    WebClientOptions for the Vertx WebClient
+     * @param externalTaskOptions ExternalTaskOptions instance which defines External Task configurations such as baseUrl and various endpoints.
+     */
+    public ExternalTaskService(Vertx vertx, WebClientOptions webClientOptions, ExternalTaskOptions externalTaskOptions) {
         this.vertx = vertx;
-        client = WebClient.create(vertx, webClientOptions);
+        this.client = WebClient.create(vertx, webClientOptions);
+        this.externalTaskOptions = externalTaskOptions;
     }
 
     /**
@@ -62,11 +67,10 @@ public class ExternalTaskService {
      * @return Future of FetchAndLockResponseListModel
      */
     public Future<FetchAndLockResponseListModel> fetchAndLock(FetchAndLockModel requestModel) throws CamundaErrorResponse, IllegalStateException {
-
         Future<FetchAndLockResponseListModel> response = Future.future();
 
-        HttpRequest<Buffer> request = client.postAbs(getAbsoluteExternalTaskUrl() + fetchAndLockUri);
-        request.headers().addAll(commonHeaders);
+        HttpRequest<Buffer> request = client.postAbs(externalTaskOptions.getAbsoluteExternalTaskUrl() + externalTaskOptions.getFetchAndLockUri());
+        request.headers().addAll(externalTaskOptions.getCommonHeaders());
         request.sendJson(requestModel, ar -> {
             if (ar.succeeded()) {
                 switch (ar.result().statusCode()) {
@@ -76,11 +80,8 @@ public class ExternalTaskService {
                                     new TypeReference<List<FetchAndLockResponseModel>>() {
                                     });
 
-                            FetchAndLockResponseList.Builder listObject = FetchAndLockResponseList.builder();
-
-                            if (ar.result().statusCode() == 200) {
-                                listObject.addAllFetchedTasks(list);
-                            }
+                            FetchAndLockResponseList.Builder listObject = FetchAndLockResponseList.builder()
+                                    .addAllFetchedTasks(list);
 
                             listObject.responseDetails(ar.result());
                             response.complete(listObject.build());
@@ -113,12 +114,12 @@ public class ExternalTaskService {
      *
      * @return Future of CompleteResponseModel
      */
-    public Future<CompleteResponseModel> complete(CompleteModel completeModel) throws CamundaErrorResponse, IllegalStateException  {
+    public Future<CompleteResponseModel> complete(CompleteModel completeModel) throws CamundaErrorResponse, IllegalStateException {
 
         Future<CompleteResponseModel> response = Future.future();
 
-        HttpRequest<Buffer> request = client.postAbs(String.format(getAbsoluteExternalTaskUrl() + completeUri, completeModel.getId()));
-        request.headers().addAll(commonHeaders);
+        HttpRequest<Buffer> request = client.postAbs(String.format(externalTaskOptions.getAbsoluteExternalTaskUrl() + externalTaskOptions.getCompleteUri(), completeModel.getId()));
+        request.headers().addAll(externalTaskOptions.getCommonHeaders());
         request.sendJson(completeModel, ar -> {
             if (ar.succeeded()) {
                 switch (ar.result().statusCode()) {
@@ -152,12 +153,12 @@ public class ExternalTaskService {
      *
      * @return Future of HandleBpmnErrorResponseModel
      */
-    public Future<HandleBpmnErrorResponseModel> handleBpmnError(HandleBpmnErrorModel handleBpmnErrorModel) throws CamundaErrorResponse, IllegalStateException  {
+    public Future<HandleBpmnErrorResponseModel> handleBpmnError(HandleBpmnErrorModel handleBpmnErrorModel) throws CamundaErrorResponse, IllegalStateException {
 
         Future<HandleBpmnErrorResponseModel> response = Future.future();
 
-        HttpRequest<Buffer> request = client.postAbs(String.format(getAbsoluteExternalTaskUrl() + bpmnErrorUri, handleBpmnErrorModel.getId()));
-        request.headers().addAll(commonHeaders);
+        HttpRequest<Buffer> request = client.postAbs(String.format(externalTaskOptions.getAbsoluteExternalTaskUrl() + externalTaskOptions.getBpmnErrorUri(), handleBpmnErrorModel.getId()));
+        request.headers().addAll(externalTaskOptions.getCommonHeaders());
         request.sendJson(handleBpmnErrorModel, ar -> {
             if (ar.succeeded()) {
                 switch (ar.result().statusCode()) {
@@ -191,12 +192,12 @@ public class ExternalTaskService {
      *
      * @return Future of HandleFailureResponseModel
      */
-    public Future<HandleFailureResponseModel> handleFailure(HandleFailureModel handleFailureModel) throws CamundaErrorResponse, IllegalStateException  {
+    public Future<HandleFailureResponseModel> handleFailure(HandleFailureModel handleFailureModel) throws CamundaErrorResponse, IllegalStateException {
 
         Future<HandleFailureResponseModel> response = Future.future();
 
-        HttpRequest<Buffer> request = client.postAbs(String.format(getAbsoluteExternalTaskUrl() + failureUri, handleFailureModel.getId()));
-        request.headers().addAll(commonHeaders);
+        HttpRequest<Buffer> request = client.postAbs(String.format(externalTaskOptions.getAbsoluteExternalTaskUrl() + externalTaskOptions.getFailureUri(), handleFailureModel.getId()));
+        request.headers().addAll(externalTaskOptions.getCommonHeaders());
         request.sendJson(handleFailureModel, ar -> {
             if (ar.succeeded()) {
                 switch (ar.result().statusCode()) {
@@ -223,90 +224,4 @@ public class ExternalTaskService {
         return response;
     }
 
-
-    //
-    // SETTERS AND GETTERS
-    //
-
-    public String getAbsoluteExternalTaskUrl() {
-        return getAbsoluteBaseUrl() + getCamundaRestUri() + getCamundaExternalTaskUri();
-    }
-
-    public String getFetchAndLockUri() {
-        return fetchAndLockUri;
-    }
-
-    public ExternalTaskService setFetchAndLockUri(String fetchAndLockUri) {
-        Objects.requireNonNull(fetchAndLockUri);
-        this.fetchAndLockUri = fetchAndLockUri;
-        return this;
-    }
-
-    public String getCompleteUri() {
-        return completeUri;
-    }
-
-    public ExternalTaskService setCompleteUri(String completeUri) {
-        Objects.requireNonNull(completeUri);
-        this.completeUri = completeUri;
-        return this;
-    }
-
-    public String getBpmnErrorUri() {
-        return bpmnErrorUri;
-    }
-
-    public ExternalTaskService setBpmnErrorUri(String bpmnErrorUri) {
-        Objects.requireNonNull(bpmnErrorUri);
-        this.bpmnErrorUri = bpmnErrorUri;
-        return this;
-    }
-
-    public String getFailureUri() {
-        return failureUri;
-    }
-
-    public ExternalTaskService setFailureUri(String failureUri) {
-        Objects.requireNonNull(failureUri);
-        this.failureUri = failureUri;
-        return this;
-    }
-
-    public String getAbsoluteBaseUrl() {
-        return baseUrl;
-    }
-
-    public ExternalTaskService setBaseUrl(String baseUrl) {
-        Objects.requireNonNull(baseUrl);
-        this.baseUrl = baseUrl;
-        return this;
-    }
-
-    public MultiMap getCommonHeaders() {
-        return commonHeaders;
-    }
-
-    public ExternalTaskService setCommonHeaders(CaseInsensitiveHeaders commonHeaders) {
-        Objects.requireNonNull(commonHeaders);
-        this.commonHeaders = commonHeaders;
-        return this;
-    }
-
-    public String getCamundaRestUri() {
-        return camundaRestUri;
-    }
-
-    public ExternalTaskService setCamundaRestUri(String camundaRestUri) {
-        this.camundaRestUri = camundaRestUri;
-        return this;
-    }
-
-    public String getCamundaExternalTaskUri() {
-        return camundaExternalTaskUri;
-    }
-
-    public ExternalTaskService setCamundaExternalTaskUri(String camundaExternalTaskUri) {
-        this.camundaExternalTaskUri = camundaExternalTaskUri;
-        return this;
-    }
 }

@@ -14,25 +14,24 @@ public class ExternalTaskCircutBreaker {
      * options and linearRetryValue can be null.
      * @param vertx
      * @param options
-     * @param linearRetryValue
      */
-    public ExternalTaskCircutBreaker(@NotNull Vertx vertx, @NotNull final Long linearRetryValue, CircuitBreakerOptions options){
+    public ExternalTaskCircutBreaker(@NotNull Vertx vertx, CircuitBreakerOptions options){
         if (options == null){
            options = new CircuitBreakerOptions()
-                   .setMaxFailures(1)
-                   .setResetTimeout(1000)
-                   .setMaxRetries(99) // is actually 5 (0=1)
+                   .setMaxFailures(4)
+                   .setMaxRetries(4) // is actually 20 (0=1)
                    .setTimeout(120000);
         }
 
-        CircuitBreaker breaker = CircuitBreaker.create("camunda-external-task-breaker", vertx, options
-        ).openHandler(v -> {
-            System.out.println("Circuit opened");
-        }).closeHandler(v -> {
-            System.out.println("Circuit closed");
-        });
+        CircuitBreaker breaker = CircuitBreaker.create("camunda-external-task-breaker", vertx, options)
+                .openHandler(v -> {
+                    System.out.println("camunda-external-task-breaker Circuit opened");
+                })
+                .closeHandler(v -> {
+                    System.out.println("camunda-external-task-breaker Circuit closed");
+                })
+                .retryPolicy(retryCount -> retryCount * 2000L);
 
-        breaker.retryPolicy(retryCount -> retryCount * linearRetryValue);
         circuitBreaker = breaker;
     }
 

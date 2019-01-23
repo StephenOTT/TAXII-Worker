@@ -1,13 +1,15 @@
 package io.digitalstate.taxii.camunda.worker;
 
 import io.digitalstate.taxii.camunda.client.externaltask.ExternalTaskCircutBreaker;
+import io.digitalstate.taxii.camunda.client.externaltask.ExternalTaskOptions;
 import io.digitalstate.taxii.camunda.client.externaltask.ExternalTaskService;
 import io.digitalstate.taxii.camunda.client.externaltask.models.complete.Complete;
 import io.digitalstate.taxii.camunda.client.externaltask.models.complete.CompleteModel;
 import io.digitalstate.taxii.camunda.client.externaltask.models.fetchandlock.*;
 import io.vertx.circuitbreaker.CircuitBreaker;
-import io.vertx.circuitbreaker.CircuitBreakerState;
 import io.vertx.core.AbstractVerticle;
+import io.vertx.core.Future;
+import io.vertx.ext.web.client.WebClientOptions;
 
 import java.util.Date;
 import java.util.List;
@@ -23,8 +25,12 @@ public class MainVerticle extends AbstractVerticle {
         // Registers additional modules for Java8 Jackson usage
         JsonConfig.registerModules();
 
-        externalTaskService = new ExternalTaskService(vertx)
-                .setBaseUrl("http://localhost:8081");
+        WebClientOptions wcOptions = new WebClientOptions()
+                .setKeepAliveTimeout(600); // Web Client set to 10min mix keep alive
+
+        externalTaskService = new ExternalTaskService(vertx,
+                wcOptions,
+                new ExternalTaskOptions("http://localhost:8081"));
 
         // Setup a Fetch and Lock configuration with a topic.
         FetchAndLock falConfig = FetchAndLock.builder()
@@ -37,45 +43,60 @@ public class MainVerticle extends AbstractVerticle {
                 .maxTasks(50)
                 .usePriority(true)
                 .workerId("central-worker")
+                .asyncResponseTimeout(300000) // Camunda set to 5 min keepalive (note that its shorter than the Web Client).  THe Web Client is acting as the final fail safe / global value for that External Task Service Instance.
                 .build();
 
-        CircuitBreaker breaker = new ExternalTaskCircutBreaker(vertx, 2000L, null).getCircuitBreaker();
+        // Breaker is used for Circuit Breaker pattern in-case Camunda is unreachable or is providing error responses
+        CircuitBreaker breaker = new ExternalTaskCircutBreaker(vertx, null).getCircuitBreaker();
 
-        checkForTasks(breaker, falConfig);
-        vertx.setPeriodic(5000, t->{
-            System.out.println("Breaker state is: " + breaker.state().toString());
-            if (breaker.state().equals(CircuitBreakerState.HALF_OPEN) || breaker.state().equals(CircuitBreakerState.OPEN)){
-                System.out.println("Resetting breaker...");
-                breaker.reset();
-
-                checkForTasks(breaker,falConfig);
-            }
-        });
-
+        fetchAndLockUsingBreaker(breaker, falConfig);
 
     }
 
-    private void checkForTasks(CircuitBreaker breaker, FetchAndLockModel fetchAndLockModel){
-         breaker.execute(future -> {
-            System.out.println("Attempting to Fetch and Lock Tasks... " + new Date().toString());
-
-            externalTaskService.fetchAndLock(fetchAndLockModel).setHandler(result -> {
+    /**
+     * Implements Circuit Breaker with looping so as long as the Fetch and Lock is not throwing errors then the breaker will remain closed and endlessly loop.
+     * @param breaker
+     * @param falConfig
+     */
+    private void fetchAndLockUsingBreaker(CircuitBreaker breaker, FetchAndLockModel falConfig){
+        breaker.execute(future -> {
+            Future<Object> tasksCheckResult = fetchAndLock(falConfig);
+            tasksCheckResult.setHandler(result -> {
                 if (result.succeeded()) {
-                    List<FetchAndLockResponseModel> tasks = result.result().getFetchedTasks();
-
-                    if (!tasks.isEmpty()) {
-                        future.complete();
-                        tasks.forEach(this::doSomeWork);
-                    } else {
-                        System.out.println("No tasks found");
-                        future.fail("No Tasks Found");
-                    }
-                } else {
-                    System.out.println(result.cause().getMessage());
+                    future.complete();
+                    fetchAndLockUsingBreaker(breaker, falConfig);
+                } else if (result.failed()) {
                     future.fail(result.cause());
                 }
             });
         });
+    }
+
+    /**
+     * Single Use Fetch and Lock.  After tasks are fetched the future is completed and will not loop.
+     * @param fetchAndLockModel
+     * @return
+     */
+    private Future<Object> fetchAndLock(FetchAndLockModel fetchAndLockModel) {
+        Future<Object> future = Future.future();
+
+        System.out.println("Attempting to Fetch and Lock Tasks... " + new Date().toString());
+        externalTaskService.fetchAndLock(fetchAndLockModel).setHandler(result -> {
+            if (result.succeeded()) {
+                List<FetchAndLockResponseModel> tasks = result.result().getFetchedTasks();
+
+                if (!tasks.isEmpty()) {
+                    tasks.forEach(this::doSomeWork);
+                    future.complete(tasks.size() + " Tasks found and executed");
+
+                } else {
+                    future.complete("No tasks found.");
+                }
+            } else {
+                future.fail(result.cause());
+            }
+        });
+        return future;
     }
 
 
@@ -91,11 +112,22 @@ public class MainVerticle extends AbstractVerticle {
         // ...
         System.out.println("WORK IS BEING DONE....");
 
+
+        // Build the completion object:
         CompleteModel completionInfo = Complete.builder()
                 .id(task.getId())
+                .workerId(task.getWorkerId())
                 .build();
 
-        completeWork(completionInfo);
+        completeWork(completionInfo).setHandler(result->{
+            if (result.succeeded()){
+                System.out.println(result.result());
+
+                // If Task could not be completed
+            } else if (result.failed()){
+                System.out.println(result.cause().getMessage());
+            }
+        });
     }
 
     /*
@@ -103,13 +135,17 @@ public class MainVerticle extends AbstractVerticle {
      * allowing error handling to be dependent on how the processor wants to deal with errors.
      *
      */
-    private void completeWork(CompleteModel completeModel) {
+    private Future<String> completeWork(CompleteModel completeModel) {
+        Future<String> future = Future.future();
+
         externalTaskService.complete(completeModel).setHandler(completeResult -> {
             if (completeResult.succeeded()) {
-                System.out.println(String.format("Task %s completed.", completeModel.getId()));
+                String message = String.format("Task %s completed.", completeModel.getId());
+                future.complete(message);
             } else {
-                System.out.println(completeResult.cause().getMessage());
+                future.fail(completeResult.cause());
             }
         });
+        return future;
     }
 }
