@@ -38,22 +38,32 @@ FetchAndLock falConfig = FetchAndLock.builder()
     .workerId("central-worker")
     .build();
 
-externalTaskService.fetchAndLock(falConfig).setHandler(result -> {
-    if (result.succeeded()) {
-        List<FetchAndLockResponseModel> tasks = result.result().getFetchedTasks();
+/**
+ * Single Use Fetch and Lock.  After tasks are fetched the future is completed and will not loop.
+ * @param fetchAndLockModel
+ * @return
+ */
+private Future<Object> fetchAndLock(FetchAndLockModel fetchAndLockModel) {
+    Future<Object> future = Future.future();
 
-        if (!tasks.isEmpty()) {
-            future.complete();
-            tasks.forEach(this::doSomeWork);
+    System.out.println("Attempting to Fetch and Lock Tasks... " + new Date().toString());
+    externalTaskService.fetchAndLock(fetchAndLockModel).setHandler(result -> {
+        if (result.succeeded()) {
+            List<FetchAndLockResponseModel> tasks = result.result().getFetchedTasks();
+
+            if (!tasks.isEmpty()) {
+                tasks.forEach(this::doSomeWork);
+                future.complete(tasks.size() + " Tasks found and executed");
+
+            } else {
+                future.complete("No tasks found.");
+            }
         } else {
-            System.out.println("No tasks found");
-            future.fail("No Tasks Found");
+            future.fail(result.cause());
         }
-    } else {
-        System.out.println(result.cause().getMessage());
-        future.fail(result.cause());
-    }
-});
+    });
+    return future;
+}
 ```
 
 ## Complete
@@ -101,116 +111,60 @@ Example usage is, if you were using the fetchAndLock(), and camunda returned a s
 
 # Example usage
 
-Setup the Client:
-
-```java
-externalTaskService = new ExternalTaskService(vertx)
-        .setBaseUrl("http://localhost:8081");
-```
-
-Creating a Fetch and Lock package for use by the Web Client:
-
-```java
-FetchAndLock falConfig = FetchAndLock.builder()
-    .addTopic(FetchAndLockTopic.builder()
-            .topicName("mytopic")
-            .build())
-    .addTopic(FetchAndLockTopic.builder()
-            .topicName("someOtherSimilarTopic")
-            .build())
-    .maxTasks(50)
-    .usePriority(true)
-    .workerId("central-worker")
-    .build();
-```
-
-and then you can use this a FetchAndLock object:
-
-```java
-externalTaskService.fetchAndLock(falConfig).setHandler(result -> {
-    if (result.succeeded()) {
-        List<FetchAndLockResponseModel> tasks = result.result().getFetchedTasks();
-
-        if (!tasks.isEmpty()) {
-            future.complete();
-            tasks.forEach(this::doSomeWork);
-        } else {
-            System.out.println("No tasks found");
-            future.fail("No Tasks Found");
-        }
-    } else {
-        System.out.println(result.cause().getMessage());
-        future.fail(result.cause());
-    }
-});
-```
-
-After doing your work in the doSomeWork() method, you can return the result:
-
-```java
-private void completeWork(CompleteModel completeModel) {
-    externalTaskService.complete(completeModel).setHandler(completeResult -> {
-        if (completeResult.succeeded()) {
-            System.out.println(String.format("Task %s completed.", completeModel.getId()));
-        } else {
-            System.out.println(completeResult.cause().getMessage());
-        }
-    });
-}
-```
-
-Each Camunda External task endpoint has a Immutable builder avaliable, and each response is returned in a Immutable Response.
-
-Everything is type checked and validated with Bean Validation annotations.
+...
 
 # A circut breaker can be implemented using the ExternalTaskCircuitBreaker class:
 
 ```java
 
-CircuitBreaker breaker = new ExternalTaskCircutBreaker(vertx, 2000L, null).getCircuitBreaker();
+CircuitBreaker breaker = new ExternalTaskCircutBreaker(vertx, null).getCircuitBreaker();
 
-checkForTasks(breaker, falConfig);
-
-private void checkForTasks(CircuitBreaker breaker, FetchAndLockModel fetchAndLockModel){
-         breaker.execute(future -> {
-            System.out.println("Attempting to Fetch and Lock Tasks... " + new Date().toString());
-
-            externalTaskService.fetchAndLock(fetchAndLockModel).setHandler(result -> {
-                if (result.succeeded()) {
-                    List<FetchAndLockResponseModel> tasks = result.result().getFetchedTasks();
-
-                    if (!tasks.isEmpty()) {
-                        future.complete();
-                        tasks.forEach(this::doSomeWork);
-                    } else {
-                        System.out.println("No tasks found");
-                        future.fail("No Tasks Found");
-                    }
-                } else {
-                    System.out.println(result.cause().getMessage());
-                    future.fail(result.cause());
-                }
-            });
+/**
+* Implements Circuit Breaker with looping so as long as the Fetch and Lock is not throwing errors then the breaker will remain closed and endlessly loop.
+* @param breaker
+* @param falConfig
+*/
+private void fetchAndLockUsingBreaker(CircuitBreaker breaker, FetchAndLockModel falConfig){
+    breaker.execute(future -> {
+        Future<Object> tasksCheckResult = fetchAndLock(falConfig);
+        tasksCheckResult.setHandler(result -> {
+            if (result.succeeded()) {
+                future.complete();
+                fetchAndLockUsingBreaker(breaker, falConfig);
+            } else if (result.failed()) {
+                future.fail(result.cause());
+            }
         });
-    }
+    });
+}
 
-```
+/**
+* Single Use Fetch and Lock.  After tasks are fetched the future is completed and will not loop.
+* @param fetchAndLockModel
+* @return
+*/
+private Future<Object> fetchAndLock(FetchAndLockModel fetchAndLockModel) {
+    Future<Object> future = Future.future();
+    
+    System.out.println("Attempting to Fetch and Lock Tasks... " + new Date().toString());
+    externalTaskService.fetchAndLock(fetchAndLockModel).setHandler(result -> {
+        if (result.succeeded()) {
+            List<FetchAndLockResponseModel> tasks = result.result().getFetchedTasks();
+    
+            if (!tasks.isEmpty()) {
+                tasks.forEach(this::doSomeWork);
+                future.complete(tasks.size() + " Tasks found and executed");
+    
+            } else {
+                future.complete("No tasks found.");
+            }
+        } else {
+            future.fail(result.cause());
+        }
+    });
+    return future;
+}
 
-The breaker ~could~ be setup to provide automatic result such as (but not recommended usage as it is a bit hacky):
-
-```java
-CircuitBreaker breaker = new ExternalTaskCircutBreaker(vertx, 2000L, null).getCircuitBreaker();
-
-checkForTasks(breaker, falConfig);
-vertx.setPeriodic(5000, t->{
-    System.out.println("Breaker state is: " + breaker.state().toString());
-    if (breaker.state().equals(CircuitBreakerState.HALF_OPEN) || breaker.state().equals(CircuitBreakerState.OPEN)){
-        System.out.println("Resetting breaker...");
-        breaker.reset();
-
-        checkForTasks(breaker,falConfig);
-    }
-});
 ```
 
 # Larger scale usage
