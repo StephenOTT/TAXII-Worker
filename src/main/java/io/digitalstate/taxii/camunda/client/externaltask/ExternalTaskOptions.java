@@ -44,6 +44,10 @@ public class ExternalTaskOptions {
     }
 
 
+    /**
+     * Get the absolute path of the External Task Rest Endpoint: BaseUrl + RestUi + ExternalTaskUri
+     * @return
+     */
     @JsonIgnore
     public String getAbsoluteExternalTaskUrl() {
         return getBaseUrl() + getCamundaRestUri() + getCamundaExternalTaskUri();
@@ -100,10 +104,20 @@ public class ExternalTaskOptions {
     }
 
 
+    /**
+     * Get the headers that will be used on all External Task http requests.
+     * @return MultiMap / {@link CaseInsensitiveHeaders} of common headers.
+     */
     public MultiMap getCommonHeaders() {
         return this.commonHeaders;
     }
 
+    /**
+     * Sets the headers that should be used on all External Task http requests.
+     * Commonly used when you want to setup things like Basic Auth or oAuth.
+     * @param commonHeaders
+     * @return
+     */
     public ExternalTaskOptions setCommonHeaders(CaseInsensitiveHeaders commonHeaders) {
         Objects.requireNonNull(commonHeaders);
         this.commonHeaders = commonHeaders;
