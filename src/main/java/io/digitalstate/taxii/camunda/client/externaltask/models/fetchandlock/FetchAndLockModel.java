@@ -19,6 +19,12 @@ import java.util.Set;
 @JsonSerialize(as = FetchAndLock.class) @JsonDeserialize(builder = FetchAndLock.Builder.class)
 public interface FetchAndLockModel extends EngineName {
 
+    /**
+     * Mandatory. The id of the worker on which behalf tasks are fetched.
+     * The returned tasks are locked for that worker and can only be completed when providing the same worker id.
+     * Defaults to "worker".
+     * @return
+     */
     @JsonProperty("workerId")
     @Value.Default
     @NotBlank
@@ -27,7 +33,8 @@ public interface FetchAndLockModel extends EngineName {
     }
 
     /**
-     * Default 10
+     * Mandatory. The maximum number of tasks to return.
+     * Default to 10.
      * @return
      */
     @JsonProperty("maxTasks")
@@ -38,7 +45,8 @@ public interface FetchAndLockModel extends EngineName {
     }
 
     /**
-     * Default False
+     * A boolean value, which indicates whether the task should be fetched based on its priority or arbitrarily.
+     * Default to False.
      * @return
      */
     @JsonProperty("usePriority")
@@ -48,13 +56,18 @@ public interface FetchAndLockModel extends EngineName {
     }
 
     /**
-     * The async response timeout value in milliseconds.  Max value is 1,800,0000 (30 minutes)
+     * The Long Polling timeout in milliseconds.
+     * Note: The value cannot be set larger than 1.800.000 milliseconds (corresponds to 30 minutes).
+     * Use this when you want to use Long Polling.
      */
     @JsonProperty("asyncResponseTimeout")
     @Max(1800000) @Positive
     Optional<Long> getAsyncResponseTimeout();
 
     /**
+     * A JSON array of topic objects for which external tasks should be fetched.
+     * The returned tasks may be arbitrarily distributed among these topics.
+     * Each topic object is a instance of {@link FetchAndLockTopicModel}
      * Requires minimum 1 topic configuration.
      * @return
      */
