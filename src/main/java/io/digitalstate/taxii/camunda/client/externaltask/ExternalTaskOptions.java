@@ -1,5 +1,10 @@
 package io.digitalstate.taxii.camunda.client.externaltask;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import io.digitalstate.taxii.camunda.client.externaltask.json.CaseInsensitiveHeadersDeserializer;
+import io.digitalstate.taxii.camunda.client.externaltask.json.CaseInsensitiveHeadersSerializer;
 import io.vertx.core.MultiMap;
 import io.vertx.core.http.CaseInsensitiveHeaders;
 
@@ -16,6 +21,8 @@ public class ExternalTaskOptions {
     private String camundaExternalTaskUri = "/external-task";
     private String baseUrl = "http://localhost:8080";
 
+    @JsonSerialize(using = CaseInsensitiveHeadersSerializer.class)
+    @JsonDeserialize(using = CaseInsensitiveHeadersDeserializer.class)
     private MultiMap commonHeaders = new CaseInsensitiveHeaders();
 
     /**
@@ -37,8 +44,9 @@ public class ExternalTaskOptions {
     }
 
 
+    @JsonIgnore
     public String getAbsoluteExternalTaskUrl() {
-        return getAbsoluteBaseUrl() + getCamundaRestUri() + getCamundaExternalTaskUri();
+        return getBaseUrl() + getCamundaRestUri() + getCamundaExternalTaskUri();
     }
 
     public String getFetchAndLockUri() {
@@ -81,7 +89,7 @@ public class ExternalTaskOptions {
         return this;
     }
 
-    public String getAbsoluteBaseUrl() {
+    public String getBaseUrl() {
         return this.baseUrl;
     }
 
@@ -90,6 +98,7 @@ public class ExternalTaskOptions {
         this.baseUrl = baseUrl;
         return this;
     }
+
 
     public MultiMap getCommonHeaders() {
         return this.commonHeaders;
