@@ -34,8 +34,6 @@ public class MainVerticle extends AbstractVerticle {
                 .asyncResponseTimeout(60000) // Camunda set to 5 min keepalive (note that its shorter than the Web Client).  THe Web Client is acting as the final fail safe / global value for that External Task Service Instance.
                 .build();
 
-        //@TODO Review issue where when worker fails without closing the connection, Camunda will allow the connection to be reopened.
-
         ExternalTaskOptions externalTaskOptions = new ExternalTaskOptions("http://localhost:8081");
 //        externalTaskOptions.getCommonHeaders()
 //                .add("x-test1", "some_header_value; 123")
