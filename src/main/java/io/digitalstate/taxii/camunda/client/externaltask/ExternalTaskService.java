@@ -69,6 +69,7 @@ public class ExternalTaskService {
     public Future<FetchAndLockResponseListModel> fetchAndLock(FetchAndLockModel requestModel) throws CamundaErrorResponse, IllegalStateException {
         Future<FetchAndLockResponseListModel> response = Future.future();
 
+        System.out.println("Setting up Fetch and Lock...");
         HttpRequest<Buffer> request = client.postAbs(externalTaskOptions.getAbsoluteExternalTaskUrl() + externalTaskOptions.getFetchAndLockUri());
         request.headers().addAll(externalTaskOptions.getCommonHeaders());
         request.sendJson(requestModel, ar -> {
@@ -80,11 +81,11 @@ public class ExternalTaskService {
                                     new TypeReference<List<FetchAndLockResponseModel>>() {
                                     });
 
-                            FetchAndLockResponseList.Builder listObject = FetchAndLockResponseList.builder()
-                                    .addAllFetchedTasks(list);
+                            FetchAndLockResponseList listObject = FetchAndLockResponseList.builder()
+                                    .addAllFetchedTasks(list)
+                                    .responseDetails(ar.result()).build();
 
-                            listObject.responseDetails(ar.result());
-                            response.complete(listObject.build());
+                            response.complete(listObject);
 
                         } catch (Exception e) {
                             throw new IllegalStateException("Unable to parse external tasks.  Response was: " + ar.result().bodyAsString(), e);
