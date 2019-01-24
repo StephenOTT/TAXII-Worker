@@ -178,3 +178,8 @@ This enables other verticles to not to have worry about Camunda specific informa
 Further you could also have each verticle long poll or jitter poll camunda and process everything within the verticle it self.
 
 The current thinking is that centralized polling with pushing the work to individual verticles through the event bus is optimial as it scales the best without having to increase the load of polling on the Camunda server.
+
+
+# Known Bugs
+
+[CAM-9562](https://app.camunda.com/jira/browse/CAM-9562) - Camunda Versions: 7.10.0, 7.9.6, 7.11.9: Long Polling that has a connection terminated will cause tasks to be locked automatically without the worker receiving them.  This is a bug with Camunda and not TAXII-Worker.
