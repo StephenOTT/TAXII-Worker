@@ -183,3 +183,19 @@ The current thinking is that centralized polling with pushing the work to indivi
 # Known Bugs
 
 [CAM-9562](https://app.camunda.com/jira/browse/CAM-9562) - Camunda Versions: 7.10.0, 7.9.6, 7.11.9: Long Polling that has a connection terminated will cause tasks to be locked automatically without the worker receiving them.  This is a bug with Camunda and not TAXII-Worker.
+
+
+
+# GraalVM
+
+GraalVM is used to provide polymorphic language execution support with languages such as (LLVM, C, Java, Groovy, Other JVM based scripting languages, Ruby, JavaScript and Node, Python, R, etc).
+
+This support is experimental at this stage but will grow as the worker is enhanced.
+
+A working example can be see with the `...graal.python.PythonExecutor` class. 
+
+Currently tested against **GraalVM 1.0.0 rc9**.  This is also the version used in the pom.xml for the GraalSDK.
+
+You must execute The worker in a GraalVM environment, and it must have the Python language installed.
+
+You can install GraalVM with SDKMAN.  Then you can execute `~/.sdkMan/candidates/java/1.0.0-rc9-graal/jre/bin/gu install python`
