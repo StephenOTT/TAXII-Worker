@@ -3,6 +3,7 @@ package io.digitalstate.taxii.camunda.client.externaltask;
 import io.vertx.circuitbreaker.CircuitBreaker;
 import io.vertx.circuitbreaker.CircuitBreakerOptions;
 import io.vertx.core.Vertx;
+import io.vertx.core.json.Json;
 
 import javax.validation.constraints.NotNull;
 
@@ -21,6 +22,8 @@ public class ExternalTaskCircutBreaker {
                    .setMaxFailures(4)
                    .setMaxRetries(4) // is actually 20 (0=1)
                    .setTimeout(120000);
+            String output = Json.encode(options);
+            Json.decodeValue(output, CircuitBreakerOptions.class);
         }
 
         CircuitBreaker breaker = CircuitBreaker.create("camunda-external-task-breaker", vertx, options)
