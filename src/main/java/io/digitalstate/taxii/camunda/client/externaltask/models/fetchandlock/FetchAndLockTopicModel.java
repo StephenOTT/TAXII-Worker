@@ -27,7 +27,7 @@ public interface FetchAndLockTopicModel {
     @JsonProperty("lockDuration")
     @Positive
     @Value.Default
-    default long getlockDuration(){
+    default long getLockDuration(){
         return 300000L;
     }
 
