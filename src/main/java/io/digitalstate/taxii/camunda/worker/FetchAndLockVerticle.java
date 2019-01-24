@@ -8,6 +8,7 @@ import io.digitalstate.taxii.camunda.client.externaltask.models.complete.Complet
 import io.digitalstate.taxii.camunda.client.externaltask.models.fetchandlock.FetchAndLockModel;
 import io.digitalstate.taxii.camunda.client.externaltask.models.fetchandlock.FetchAndLockResponseModel;
 import io.digitalstate.taxii.camunda.worker.common.VertxObjectMapperConfig;
+import io.digitalstate.taxii.graal.python.PythonExecutor;
 import io.vertx.circuitbreaker.CircuitBreaker;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;
@@ -138,6 +139,8 @@ public class FetchAndLockVerticle extends AbstractVerticle {
         // Would add a If statement here that would throw a "future.fail(...)" if the actual work could not be compeleted.
         // Could also implement Handle BPMN Error or Handle Failure calls as well.
 
+        System.out.println("Executing Python Code over Graal: ");
+        new PythonExecutor();
 
         // Build the completion object:
         CompleteModel completionInfo = Complete.builder()
