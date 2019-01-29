@@ -1,6 +1,5 @@
 package io.digitalstate.taxii.camunda.client.externaltask.models.fetchandlock;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
@@ -9,9 +8,7 @@ import io.digitalstate.taxii.camunda.client.common.EngineName;
 import io.digitalstate.taxii.camunda.client.common.HttpResponseDetails;
 import org.immutables.value.Value;
 
-import javax.validation.constraints.NotBlank;
 import java.util.List;
-import java.util.Optional;
 
 import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_EMPTY;
 
