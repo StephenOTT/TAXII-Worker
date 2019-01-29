@@ -7,15 +7,14 @@ import io.digitalstate.taxii.camunda.client.externaltask.models.complete.Complet
 import io.digitalstate.taxii.camunda.client.externaltask.models.complete.CompleteModel;
 import io.digitalstate.taxii.camunda.client.externaltask.models.fetchandlock.FetchAndLockModel;
 import io.digitalstate.taxii.camunda.client.externaltask.models.fetchandlock.FetchAndLockResponseModel;
+import io.digitalstate.taxii.camunda.client.variables.models.serialization.FileVariable;
 import io.digitalstate.taxii.camunda.worker.common.VertxObjectMapperConfig;
-import io.digitalstate.taxii.graal.python.PolymorphicExecutor;
 import io.vertx.circuitbreaker.CircuitBreaker;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;
 import io.vertx.core.json.Json;
 import io.vertx.ext.web.client.WebClientOptions;
 
-import java.nio.charset.Charset;
 import java.util.Date;
 import java.util.List;
 
@@ -152,11 +151,12 @@ public class FetchAndLockVerticle extends AbstractVerticle {
 //        System.out.println(task.getVariables().get("myBytes").getValueTyped());
 //        System.out.println(task.getVariables().get("myVar").getValueTyped().getClass().getCanonicalName());
 
-
         // Build the completion object:
+        String myValue = "dogs!";
         CompleteModel completionInfo = Complete.builder()
                 .id(task.getId())
                 .workerId(task.getWorkerId())
+                .putVariable("someFile", FileVariable.of(myValue.getBytes(),"dogssss.txt").withIsTransient(false))
                 .build();
 
         completeWork(completionInfo).setHandler(result -> {

@@ -1,4 +1,4 @@
-package io.digitalstate.taxii.camunda.client.variables;
+package io.digitalstate.taxii.camunda.client.variables.models;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -62,6 +62,6 @@ public interface ValueInfoProperty {
      */
     @JsonProperty("transient")
     @JsonInclude(value = NON_EMPTY, content= NON_EMPTY)
-    Optional<Boolean> getTransient();
+    Optional<Boolean> isTransient();
 
 }

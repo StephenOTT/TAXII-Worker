@@ -5,7 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import io.digitalstate.taxii.camunda.client.common.HttpResponseDetails;
-import io.digitalstate.taxii.camunda.client.variables.VariableProperty;
+import io.digitalstate.taxii.camunda.client.variables.models.deserialization.VariableResponseModel;
 import org.immutables.value.Value;
 
 import javax.validation.constraints.NotNull;
@@ -161,7 +161,7 @@ public interface FetchAndLockResponseModel extends HttpResponseDetails {
      */
     @JsonProperty("variables")
     @JsonInclude(value = NON_EMPTY, content= NON_EMPTY)
-    Map<String, VariableProperty> getVariables();
+    Map<String, VariableResponseModel> getVariables();
 
 }
 

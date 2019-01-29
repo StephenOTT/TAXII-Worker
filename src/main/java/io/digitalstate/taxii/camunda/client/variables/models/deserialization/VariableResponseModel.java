@@ -1,8 +1,10 @@
-package io.digitalstate.taxii.camunda.client.variables;
+package io.digitalstate.taxii.camunda.client.variables.models.deserialization;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import io.digitalstate.taxii.camunda.client.variables.models.ValueInfoProperty;
 import io.vertx.core.json.JsonObject;
 import org.immutables.value.Value;
 
@@ -13,9 +15,9 @@ import java.util.Base64;
 import java.util.Optional;
 
 @Value.Immutable
-@Value.Style(jdkOnly = true, typeAbstract = "*Property", typeImmutable = "*", validationMethod = Value.Style.ValidationMethod.NONE, depluralize = true)
-@JsonSerialize(as = Variable.class) @JsonDeserialize(builder = Variable.Builder.class)
-public interface VariableProperty {
+@Value.Style(jdkOnly = true, typeAbstract = "*Model", typeImmutable = "*", validationMethod = Value.Style.ValidationMethod.NONE, depluralize = true)
+@JsonSerialize(as = VariableResponse.class) @JsonDeserialize(builder = VariableResponse.Builder.class)
+public interface VariableResponseModel {
 
     @JsonProperty("type")
     String getType();
@@ -27,9 +29,10 @@ public interface VariableProperty {
     Optional<ValueInfoProperty> getValueInfo();
 
     /**
-     * Lazy is used incase conversion is not possible and therefore the original value is still available allowing custom processing fall-backs.
+     * Lazy is used in-case conversion is not possible and therefore the original value is still available allowing custom processing fall-backs.
      * @return
      */
+    @JsonIgnore
     @Value.Lazy
     default Object getValueTyped() {
         switch (getType()){
@@ -52,7 +55,7 @@ public interface VariableProperty {
                 return Double.valueOf(getValue().toString());
 
             case "Date":
-                DateTimeFormatter formatter = DateTimeFormatter.ofPattern( "yyyy-MM-dd'T'HH:mm:ss.SSSX");
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
                 return LocalDate.parse(getValue().toString(), formatter);
 
             case "String":

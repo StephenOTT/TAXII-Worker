@@ -6,6 +6,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import io.digitalstate.taxii.camunda.client.common.EngineName;
+import io.digitalstate.taxii.camunda.client.variables.models.serialization.CamundaVariable;
 import org.immutables.value.Value;
 
 import javax.validation.constraints.NotBlank;
@@ -36,17 +37,16 @@ public interface CompleteModel extends EngineName {
         return "worker";
     }
 
-    //@TODO pull in variable support from Camunda lib
+
     @JsonProperty("variables")
     @JsonInclude(value = NON_EMPTY, content= NON_EMPTY)
     @NotNull
-    Map<String, Object> getVariables();
+    Map<String, CamundaVariable> getVariables();
 
-    //@TODO pull in variable support from Camunda lib
     @JsonProperty("localVariables")
     @JsonInclude(value = NON_EMPTY, content= NON_EMPTY)
     @NotNull
-    Map<String, Object> getLocalVariables();
+    Map<String, CamundaVariable> getLocalVariables();
 
 }
 
