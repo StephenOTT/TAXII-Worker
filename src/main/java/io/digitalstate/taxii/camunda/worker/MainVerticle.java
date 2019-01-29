@@ -27,6 +27,7 @@ public class MainVerticle extends AbstractVerticle {
                         .addVariable("myVarObject")
                         .addVariable("myTestVar")
                         .addVariable("myBytes")
+                        .addVariable("mySpin")
                         .build())
                 .addTopic(FetchAndLockTopic.builder()
                         .topicName("someOtherSimilarTopic")
