@@ -128,7 +128,6 @@ public class FetchAndLockVerticle extends AbstractVerticle {
      *
      */
     private Future<Object> doSomeWork(FetchAndLockResponseModel task) {
-
         Future<Object> future = Future.future();
 
         // ...
@@ -140,13 +139,19 @@ public class FetchAndLockVerticle extends AbstractVerticle {
         // Would add a If statement here that would throw a "future.fail(...)" if the actual work could not be compeleted.
         // Could also implement Handle BPMN Error or Handle Failure calls as well.
 
-        System.out.println("Executing Code over Graal: ");
+//        System.out.println("Executing Code over Graal: ");
 
 //        String script = vertx.fileSystem().readFileBlocking("...").toString(Charset.forName("UTF-8"));
 //        String pyScript = vertx.fileSystem().readFileBlocking("...").toString(Charset.forName("UTF-8"));
 
 //        new PolymorphicExecutor("js", script, "myJsScript");
 //        new PolymorphicExecutor("python", pyScript, "myPythonScript");
+
+//        System.out.println(task.getVariables().toString());
+//        System.out.println(task.getVariables().get("myVarObject").getValueTyped().getClass().getCanonicalName());
+//        System.out.println(task.getVariables().get("myBytes").getValueTyped());
+//        System.out.println(task.getVariables().get("myVar").getValueTyped().getClass().getCanonicalName());
+
 
         // Build the completion object:
         CompleteModel completionInfo = Complete.builder()
