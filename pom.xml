@@ -18,6 +18,7 @@
         <maven.compiler.target>1.8</maven.compiler.target>
         <java.version>1.8</java.version>
         <camunda.version>7.10.0</camunda.version>
+        <camunda.spin.version>1.6.4</camunda.spin.version>
     </properties>
 
 
@@ -30,7 +31,17 @@
                 <scope>import</scope>
                 <type>pom</type>
             </dependency>
+            <dependency>
+                <groupId>org.camunda.spin</groupId>
+                <artifactId>camunda-spin-bom</artifactId>
+                <scope>import</scope>
+                <type>pom</type>
+                <version>${camunda.spin.version}</version>
+            </dependency>
+
         </dependencies>
+
+
     </dependencyManagement>
 
     <repositories>
@@ -73,6 +84,7 @@
             <version>0.5.4</version>
         </dependency>
 
+
         <dependency>
             <groupId>com.fasterxml.jackson.module</groupId>
             <artifactId>jackson-module-parameter-names</artifactId>
@@ -84,6 +96,16 @@
         <dependency>
             <groupId>com.fasterxml.jackson.datatype</groupId>
             <artifactId>jackson-datatype-jsr310</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.camunda.spin</groupId>
+            <artifactId>camunda-spin-core</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.camunda.spin</groupId>
+            <artifactId>camunda-spin-dataformat-all</artifactId>
         </dependency>
 
         <dependency>
