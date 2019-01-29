@@ -5,10 +5,13 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import io.digitalstate.taxii.camunda.client.variables.models.ValueInfoProperty;
-import io.vertx.core.json.JsonObject;
+import org.camunda.spin.Spin;
 import org.immutables.value.Value;
 
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.ObjectInputStream;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Base64;
@@ -30,11 +33,12 @@ public interface VariableResponseModel {
 
     /**
      * Lazy is used in-case conversion is not possible and therefore the original value is still available allowing custom processing fall-backs.
+     * When Type is File, the value of {@code getValue()} will be returned
      * @return
      */
     @JsonIgnore
     @Value.Lazy
-    default Object getValueTyped() {
+    default Object getTypedValue() {
         switch (getType()){
             case "Boolean":
                 return Boolean.valueOf(getValue().toString());
@@ -62,10 +66,10 @@ public interface VariableResponseModel {
                 return String.valueOf(getValue().toString());
 
             case "Json":
-                return new JsonObject(getValue().toString());
+                return Spin.JSON(getValue());
 
             case "Xml":
-                return String.valueOf(getValue().toString());
+                return Spin.XML(getValue());
 
             case "Object":
                 String objectTypeName = getValueInfo()
@@ -105,7 +109,7 @@ public interface VariableResponseModel {
                 }
 
             case "File":
-                return String.valueOf(getValue().toString());
+                return getValue();
 
             default:
                 throw new IllegalStateException("Unable to Type the value.  Unknown Type: " + getType());
