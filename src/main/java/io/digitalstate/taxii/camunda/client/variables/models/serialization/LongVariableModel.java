@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import io.digitalstate.taxii.camunda.client.variables.models.ValueInfoProperty;
 import org.immutables.value.Value;
 
+import javax.validation.constraints.NotBlank;
 import java.util.Optional;
 
 @Value.Immutable
@@ -19,6 +20,7 @@ public interface LongVariableModel extends CamundaVariable {
 
     @Value.Default
     @JsonProperty("type")
+    @NotBlank
     default String getType(){
         return "Long";
     }
