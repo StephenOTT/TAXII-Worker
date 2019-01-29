@@ -16,17 +16,14 @@ import io.digitalstate.taxii.camunda.client.externaltask.models.fetchandlock.Fet
 import io.digitalstate.taxii.camunda.client.externaltask.models.fetchandlock.FetchAndLockResponseListModel;
 import io.digitalstate.taxii.camunda.client.externaltask.models.fetchandlock.FetchAndLockResponseModel;
 import io.vertx.core.Future;
-import io.vertx.core.MultiMap;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
-import io.vertx.core.http.CaseInsensitiveHeaders;
 import io.vertx.core.json.Json;
 import io.vertx.ext.web.client.HttpRequest;
 import io.vertx.ext.web.client.WebClient;
 import io.vertx.ext.web.client.WebClientOptions;
 
 import java.util.List;
-import java.util.Objects;
 
 public class ExternalTaskService {
 

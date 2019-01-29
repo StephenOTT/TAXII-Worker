@@ -1,6 +1,5 @@
 package io.digitalstate.taxii.graal.python;
 
-import io.vertx.core.buffer.Buffer;
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.PolyglotException;
 import org.graalvm.polyglot.Source;
