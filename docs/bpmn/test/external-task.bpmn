@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" id="Definitions_18vwuqk" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="2.2.4">
+  <bpmn:process id="test-external" name="Test External" isExecutable="true">
+    <bpmn:startEvent id="StartEvent_1">
+      <bpmn:outgoing>SequenceFlow_1mugkr0</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:sequenceFlow id="SequenceFlow_1mugkr0" sourceRef="StartEvent_1" targetRef="Task_14httob" />
+    <bpmn:serviceTask id="Task_0fxfa9n" name="external task1" camunda:type="external" camunda:topic="mytopic">
+      <bpmn:extensionElements>
+        <camunda:inputOutput>
+          <camunda:inputParameter name="myTestVar">myValue!!!</camunda:inputParameter>
+        </camunda:inputOutput>
+      </bpmn:extensionElements>
+      <bpmn:incoming>SequenceFlow_0e1su3i</bpmn:incoming>
+      <bpmn:outgoing>SequenceFlow_0yxpfip</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:endEvent id="EndEvent_0ps2laj">
+      <bpmn:incoming>SequenceFlow_0itx3vz</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="SequenceFlow_0yxpfip" sourceRef="Task_0fxfa9n" targetRef="Task_13cwzt1" />
+    <bpmn:sequenceFlow id="SequenceFlow_0itx3vz" sourceRef="Task_13cwzt1" targetRef="EndEvent_0ps2laj" />
+    <bpmn:sequenceFlow id="SequenceFlow_0e1su3i" sourceRef="Task_14httob" targetRef="Task_0fxfa9n" />
+    <bpmn:scriptTask id="Task_14httob" name="Generate Variable" scriptFormat="groovy">
+      <bpmn:incoming>SequenceFlow_1mugkr0</bpmn:incoming>
+      <bpmn:outgoing>SequenceFlow_0e1su3i</bpmn:outgoing>
+      <bpmn:script>package io.digitalstate.taxii.camunda.client.variables;
+
+class SimpleClass1 implements Serializable{
+
+    private static final long serialVersionUID = 111L;
+
+    String value1
+    String value2
+
+    SimpleClass1(String value1, String value2) {
+        this.value1 = value1
+        this.value2 = value2
+    }
+
+    String getValue1() {
+        return value1
+    }
+
+    void setValue1(String value1) {
+        this.value1 = value1
+    }
+
+    String getValue2() {
+        return value2
+    }
+
+    void setValue2(String value2) {
+        this.value2 = value2
+    }
+}
+
+String cat = "cat"
+
+
+execution.setVariable('myVarObject', new SimpleClass1("dog", "cat"))
+execution.setVariable('myBytes', cat.getBytes())
+execution.setVariable('mySpin', S('{"dog1":"dog2"}'))</bpmn:script>
+    </bpmn:scriptTask>
+    <bpmn:userTask id="Task_13cwzt1" name="placeholder">
+      <bpmn:incoming>SequenceFlow_0yxpfip</bpmn:incoming>
+      <bpmn:outgoing>SequenceFlow_0itx3vz</bpmn:outgoing>
+    </bpmn:userTask>
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="test-external">
+      <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="StartEvent_1">
+        <dc:Bounds x="70" y="102" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_1mugkr0_di" bpmnElement="SequenceFlow_1mugkr0">
+        <di:waypoint x="106" y="120" />
+        <di:waypoint x="146" y="120" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="ServiceTask_1cqlgz0_di" bpmnElement="Task_0fxfa9n">
+        <dc:Bounds x="288" y="80" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="EndEvent_0ps2laj_di" bpmnElement="EndEvent_0ps2laj">
+        <dc:Bounds x="559" y="102" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_0yxpfip_di" bpmnElement="SequenceFlow_0yxpfip">
+        <di:waypoint x="388" y="120" />
+        <di:waypoint x="415" y="120" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_0itx3vz_di" bpmnElement="SequenceFlow_0itx3vz">
+        <di:waypoint x="515" y="120" />
+        <di:waypoint x="559" y="120" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_0e1su3i_di" bpmnElement="SequenceFlow_0e1su3i">
+        <di:waypoint x="246" y="120" />
+        <di:waypoint x="288" y="120" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="ScriptTask_15whtx6_di" bpmnElement="Task_14httob">
+        <dc:Bounds x="146" y="80" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="UserTask_19jqn4d_di" bpmnElement="Task_13cwzt1">
+        <dc:Bounds x="415" y="80" width="100" height="80" />
+      </bpmndi:BPMNShape>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>
